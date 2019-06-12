@@ -1,0 +1,64 @@
+<configuration>
+	<property name="defaultPattern" value="%d{yyyy-MM-dd HH:mm:ss} - %msg%n" />
+	<springProperty scope="context" name="spring_application_name"
+		source="spring.application.name" />
+	<springProperty scope="context" name="spring_application_version"
+		source="spring.application.version" />
+		
+	<!-- APPENDERS -->	
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="com.springboot.web.common.library.logger.MaskingPatternLayout">
+			<Pattern>${defaultPattern}</Pattern>
+		</layout>
+	</appender>
+
+	<appender name="FILE-AUDIT"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>logs/${spring_application_name}-${spring_application_version}.log
+		</file>
+		<layout class="com.springboot.web.common.library.logger.MaskingPatternLayout">
+			<Pattern>${defaultPattern}</Pattern>
+		</layout>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>logs/archived/${spring_application_name}-${spring_application_version}_%d{yyyy-MM-dd}_%i.log
+			</fileNamePattern>
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>10MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+	</appender>
+
+	<appender name="DEFAULT-ASYNC-FILE" class="ch.qos.logback.classic.AsyncAppender">
+		<queueSize>512</queueSize>
+		<discardingThreshold>0</discardingThreshold>
+		<appender-ref ref="FILE-AUDIT" />
+	</appender>
+	
+	<appender name="DEFAULT-ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+		<queueSize>512</queueSize>
+		<discardingThreshold>0</discardingThreshold>
+		<appender-ref ref="STDOUT" />
+	</appender>
+
+	<!-- <appender name="aiAppender" class="com.microsoft.applicationinsights.logback.ApplicationInsightsAppender"> 
+		</appender> -->
+		
+	<!-- CONDITIONAL APPENDER -->
+	<!-- <logger name="org.hibernate" level="debug" /> -->
+	<if
+		condition='isNull("spring.profiles.active") || "${spring.profiles.active}".equals("default")'>
+		<then>
+			<logger name="ROOT" level="info">
+				<appender-ref ref="DEFAULT-ASYNC" />
+			</logger>
+		</then>
+		<else>
+			<logger name="ROOT" level="info">
+				<appender-ref ref="DEFAULT-ASYNC-FILE" />
+			</logger>
+		</else>
+	</if>
+
+
+</configuration>
